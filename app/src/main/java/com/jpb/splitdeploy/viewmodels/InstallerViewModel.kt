@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jpb.splitdeploy.UIInstallerState
 import com.jpb.splitdeploy.utils.BundleParser
+import com.jpb.splitdeploy.utils.InstallerStateNotifier
 import com.jpb.splitdeploy.utils.PackageInstallerHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,13 @@ class InstallerViewModel : ViewModel() {
 
     private var selectedFile: File? = null
 
+    init {
+        viewModelScope.launch {
+            InstallerStateNotifier.events.collect { state ->
+                _uiState.value = state
+            }
+        }
+    }
     fun onFileSelected(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
