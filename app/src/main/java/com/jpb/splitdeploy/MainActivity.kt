@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jpb.splitdeploy.ui.ExpressiveButton
+import com.jpb.splitdeploy.ui.ExpressiveOutlinedButton
 import com.jpb.splitdeploy.ui.theme.SplitDeployTheme
 import com.jpb.splitdeploy.viewmodels.InstallerViewModel
 class MainActivity : ComponentActivity() {
@@ -87,14 +89,14 @@ fun SplitDeployAppContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("Select an .apks, .xapk, or .apkm bundle to install")
                 Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = onPickFile) {
-                    Text("Select Bundle File")
+                ExpressiveButton(onClick = onPickFile) {
+                    Text("Select app bundle")
                 }
             }
 
             is UIInstallerState.Selected -> {
                 Text(
-                    text = "File Selected",
+                    text = "Selected file",
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -102,11 +104,11 @@ fun SplitDeployAppContent(
                 Text(text = state.fileSize, color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = onReset) {
+                    ExpressiveOutlinedButton(onClick = onReset) {
                         Text("Cancel")
                     }
-                    Button(onClick = onInstall) {
-                        Text("Start Installation")
+                    ExpressiveButton(onClick = onInstall) {
+                        Text("Start installation")
                     }
                 }
             }
@@ -119,12 +121,12 @@ fun SplitDeployAppContent(
 
             is UIInstallerState.Success -> {
                 Text(
-                    text = "Installation Successful!",
+                    text = "Installation successful!",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onReset) {
+                ExpressiveButton(onClick = onReset) {
                     Text("Done")
                 }
             }
@@ -138,8 +140,8 @@ fun SplitDeployAppContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = state.message)
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onReset) {
-                    Text("Try Again")
+                ExpressiveButton(onClick = onReset) {
+                    Text("Try again")
                 }
             }
         }
