@@ -57,6 +57,13 @@ class InstallerViewModel : ViewModel() {
                 val parser = BundleParser(context)
                 val parsedResult = parser.parseAndExtractBundle(file)
 
+                parsedResult.packageName?.let { pkgName ->
+                    if (parsedResult.obbFiles.isNotEmpty()) {
+                        _uiState.value = UIInstallerState.Processing("Copying OBB assets...", 0.5f)
+                        parser.copyObbFiles(context, pkgName, parsedResult.obbFiles)
+                    }
+                }
+
                 _uiState.value = UIInstallerState.Processing("Creating installation session...", 0.7f)
 
                 // Trigger PackageInstaller session

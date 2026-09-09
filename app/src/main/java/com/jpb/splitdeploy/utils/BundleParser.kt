@@ -118,4 +118,21 @@ class BundleParser(private val context: Context) {
     fun clearCache(result: ParsedBundleResult) {
         result.extractedApkFiles.firstOrNull()?.parentFile?.deleteRecursively()
     }
+
+    fun copyObbFiles(context: Context, packageName: String, obbFiles: List<File>) {
+        if (obbFiles.isEmpty()) return
+
+        // Path: /sdcard/Android/obb/<package_name>/
+        val obbDir = File(context.getExternalFilesDir(null)?.parentFile?.parentFile, "obb/$packageName")
+        if (!obbDir.exists()) obbDir.mkdirs()
+
+        obbFiles.forEach { obb ->
+            val destination = File(obbDir, obb.name)
+            obb.inputStream().use { input ->
+                destination.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+        }
+    }
 }
