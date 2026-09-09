@@ -3,6 +3,7 @@ package com.jpb.splitdeploy.utils
 import android.content.Context
 import org.json.JSONObject
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.zip.ZipEntry
@@ -41,31 +42,31 @@ class BundleParser(private val context: Context) {
             var entry: ZipEntry? = zip.nextEntry
             while (entry != null) {
                 val entryName = entry.name
+                val fileName = File(entryName).name
 
                 if (!entry.isDirectory) {
                     when {
-                        // Extract all split APK files
-                        entryName.endsWith(".apk", ignoreCase = true) -> {
-                            // Ensure you extract only the file name, ignoring any zip subfolder path
-                            val apkFileName = File(entryName).name // Strips parent directory paths in zip
+                        // Filter specifically for .apk files while ignoring hidden/system files
+                        fileName.endsWith(".apk", ignoreCase = true) && !fileName.startsWith(".") -> {
+                            val apkFile = File(outputDir, fileName)
+                            saveStreamToFile(zip, apkFile)
 
-                            if (apkFileName.endsWith(".apk", ignoreCase = true)) {
-                                val apkFile = File(outputDir, apkFileName)
-                                saveStreamToFile(zip, apkFile)
+                            // Ensure extracted file is a valid APK binary before adding
+                            if (isValidApkFile(apkFile)) {
                                 extractedApks.add(apkFile)
+                            } else {
+                                apkFile.delete() // Clean up invalid or corrupted extract
                             }
                         }
 
-                        // Extract OBB expansion files (commonly found in .xapk)
-                        entryName.endsWith(".obb", ignoreCase = true) -> {
-                            val obbFile = File(outputDir, File(entryName).name)
+                        fileName.endsWith(".obb", ignoreCase = true) -> {
+                            val obbFile = File(outputDir, fileName)
                             saveStreamToFile(zip, obbFile)
                             obbFiles.add(obbFile)
                         }
 
-                        // Parse manifest metadata if present (.xapk uses manifest.json, .apkm uses info.json)
-                        entryName.equals("manifest.json", ignoreCase = true) ||
-                                entryName.equals("info.json", ignoreCase = true) -> {
+                        fileName.equals("manifest.json", ignoreCase = true) ||
+                                fileName.equals("info.json", ignoreCase = true) -> {
                             val jsonString = zip.bufferedReader().readText()
                             packageName = extractPackageNameFromJson(jsonString)
                         }
@@ -78,7 +79,7 @@ class BundleParser(private val context: Context) {
 
         if (extractedApks.isEmpty()) {
             outputDir.deleteRecursively()
-            throw IllegalArgumentException("No APK files found inside the provided bundle.")
+            throw IllegalArgumentException("No valid APK files found inside the bundle.")
         }
 
         return ParsedBundleResult(
@@ -87,6 +88,23 @@ class BundleParser(private val context: Context) {
             obbFiles = obbFiles,
             packageName = packageName
         )
+    }
+
+    /**
+     * Validates that the extracted file has a valid Zip/APK magic header (PK\x03\x04).
+     */
+    private fun isValidApkFile(file: File): Boolean {
+        if (!file.exists() || file.length() < 4) return false
+        return try {
+            FileInputStream(file).use { input ->
+                val buffer = ByteArray(4)
+                val read = input.read(buffer, 0, 4)
+                read == 4 && buffer[0] == 'P'.toByte() && buffer[1] == 'K'.toByte() &&
+                        buffer[2] == 0x03.toByte() && buffer[3] == 0x04.toByte()
+            }
+        } catch (e: Exception) {
+            false
+        }
     }
 
     private fun detectBundleType(fileName: String): BundleType {
