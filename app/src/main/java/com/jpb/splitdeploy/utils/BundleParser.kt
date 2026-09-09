@@ -46,9 +46,14 @@ class BundleParser(private val context: Context) {
                     when {
                         // Extract all split APK files
                         entryName.endsWith(".apk", ignoreCase = true) -> {
-                            val apkFile = File(outputDir, File(entryName).name)
-                            saveStreamToFile(zip, apkFile)
-                            extractedApks.add(apkFile)
+                            // Ensure you extract only the file name, ignoring any zip subfolder path
+                            val apkFileName = File(entryName).name // Strips parent directory paths in zip
+
+                            if (apkFileName.endsWith(".apk", ignoreCase = true)) {
+                                val apkFile = File(outputDir, apkFileName)
+                                saveStreamToFile(zip, apkFile)
+                                extractedApks.add(apkFile)
+                            }
                         }
 
                         // Extract OBB expansion files (commonly found in .xapk)
