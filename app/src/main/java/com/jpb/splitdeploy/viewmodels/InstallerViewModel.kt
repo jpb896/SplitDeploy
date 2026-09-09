@@ -5,15 +5,15 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jpb.splitdeploy.UIInstallerState
 import com.jpb.splitdeploy.utils.BundleParser
+import com.jpb.splitdeploy.utils.PackageInstallerHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
-import com.jpb.splitdeploy.UIInstallerState
-import com.jpb.splitdeploy.utils.PackageInstallerHelper
-import kotlinx.coroutines.flow.asStateFlow
 
 class InstallerViewModel : ViewModel() {
 
@@ -57,11 +57,14 @@ class InstallerViewModel : ViewModel() {
                 val parser = BundleParser(context)
                 val parsedResult = parser.parseAndExtractBundle(file)
 
-                parsedResult.packageName?.let { pkgName ->
-                    if (parsedResult.obbFiles.isNotEmpty()) {
-                        _uiState.value = UIInstallerState.Processing("Copying OBB assets...", 0.5f)
-                        parser.copyObbFiles(context, pkgName, parsedResult.obbFiles)
-                    }
+                // Copy expansion assets if any OBB files were present in the bundle
+                if (parsedResult.obbFiles.isNotEmpty()) {
+                    _uiState.value = UIInstallerState.Processing("Copying OBB assets...", 0.5f)
+                    parser.copyObbFiles(
+                        extractedApks = parsedResult.extractedApkFiles,
+                        obbFiles = parsedResult.obbFiles,
+                        parsedPackageName = parsedResult.packageName
+                    )
                 }
 
                 _uiState.value = UIInstallerState.Processing("Creating installation session...", 0.7f)
